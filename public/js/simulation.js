@@ -8,12 +8,11 @@ var parameters = {
     'delay': 1000,
     'repeat_probability' : .5,
     'starting_fitness' : 100,
-    'population_refresh' : 0
 };
 
 var radius = 10;
 
-var simulationLoop = false;
+var simulation_loop = false;
 
 function Organism(xposition, yposition, fitness, color) {
     this.xposition = xposition;
@@ -53,7 +52,7 @@ function runSimulation(population) {
     var context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (var i = 0; i < population.length / 2; i++) {
+    for (var i = 0; i < population.length; i+=2) {
 	population[i].draw(context);
 	population[i+1].draw(context);
 
@@ -73,8 +72,28 @@ function runSimulation(population) {
 	}
     }
 
-    requestAnimationFrame(function() { runSimulation(population) });
-    //simulationLoop = setTimeout(function() { runSimulation(population); }, parameters.sleep);
+    // if an odd number, then the last organism gets left off. draw it, though.
+    if (population.length % 2 !== 0) {
+    	population[population.length - 1].draw(context);
+    }
+
+    // use a roulette wheel strategy to pick offspring. a naive O(n) implementation
+    var total_fitness = population.length * parameters['starting_fitness'];
+
+    var new_population = [];
+    for (var i = 0; i < population.length; i++) {
+    	var selection = Math.random() * total_fitness;
+    	for (var j = 0; j < population.length; j++) {
+	    selection -= population[j].fitness;
+    	    if (selection <= 0) {
+    	    	var c = population[j] instanceof Cooperator ? Cooperator : Defector;
+		new_population.push(new c(population[i].xposition, population[i].yposition, parameters['starting_fitness']));
+    	    	break;
+	    }
+	}
+    }
+
+    simulation_loop = setTimeout(function() { runSimulation(new_population); }, parameters.delay);
 }
 
 
@@ -90,9 +109,9 @@ $(function() {
     $('#run_simulation').on('click', function() {
 
     	// end a simulation
-	if (simulationLoop !== false) {
-	    clearTimeout(simulationLoop);
-	    simulationLoop = false;
+	if (simulation_loop !== false) {
+	    clearTimeout(simulation_loop);
+	    simulation_loop = false;
 
 	    for (i in parameters) {
 		$('#' + i).prop('disabled', false);
@@ -104,7 +123,7 @@ $(function() {
 
     	// TODO: error check numbers
     	for (i in parameters) {
-    	    parameters[i] = $('#' + i).val();
+    	    parameters[i] = parseFloat($('#' + i).val());
 	    $('#' + i).prop('disabled', true);
 	}
 
