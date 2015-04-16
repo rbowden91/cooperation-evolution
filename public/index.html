@@ -6,19 +6,21 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
   </head>
   <body>
-    <form action="">
-      <label for="benefit">Benefit of cooperation to helped: </label><input id="benefit" autocomplete="off" />
-      <label for="cost">Cost of cooperation to helper: </label><input id="cost" autocomplete="off" />
-      <label for="interactions">Number of interactions per round: </label><input id="interactions" autocomplete="off" />
-      <label for="num_organisms">Number of organisms: </label><input id="num_organisms" autocomplete="off" />
-      <label for="cooperator_fraction">Fraction of cooperators: </label><input id="cooperator_fraction" autocomplete="off" />
-      <label for="delay">Delay between rounds (ms): </label><input id="delay" autocomplete="off" />
-      <label for="repeat_probability">Probability of another round between two players: </label><input id="repeat_probability" autocomplete="off" />
-      <label for="starting_fitness">Starting fitness: </label><input id="starting_fitness" autocomplete="off" />
-      <button id="run_simulation">Run</button>
-    </form>
-    <!-- TODO: use width and height available on screen -->
-    <canvas id="simulation" width="1000" height="900"></canvas>
+    <div id="top">
+      <form action="">
+        <label for="benefit">Benefit of cooperation to helped: </label><input id="benefit" autocomplete="off" />
+        <label for="cost">Cost of cooperation to helper: </label><input id="cost" autocomplete="off" />
+        <label for="interactions">Number of interactions per round: </label><input id="interactions" autocomplete="off" />
+        <label for="num_organisms">Number of organisms: </label><input id="num_organisms" autocomplete="off" />
+        <label for="cooperator_fraction">Fraction of cooperators: </label><input id="cooperator_fraction" autocomplete="off" />
+        <label for="delay">Delay between rounds (ms): </label><input id="delay" autocomplete="off" />
+        <label for="repeat_probability">Probability of another round between two players: </label><input id="repeat_probability" autocomplete="off" />
+        <label for="starting_fitness">Starting fitness: </label><input id="starting_fitness" autocomplete="off" />
+        <button id="run_simulation">Run</button>
+      </form>
+    </div>
+    <div id="rest">
+    </div>
 
     <script src="js/jquery-2.1.3.min.js"></script>
     <script src="js/simulation.js"></script>

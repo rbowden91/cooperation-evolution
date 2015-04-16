@@ -98,6 +98,12 @@ function runSimulation(population) {
 
 
 $(function() {
+	var pageHeight = $(window).height();
+	var pageWidth = $(window).width();
+	var divHeight = $('#top').height();
+    $('#rest').html($('<canvas id="simulation" width="' + pageWidth + '" height="' + (pageHeight - divHeight - 10)  + '">'));
+
+
     for (i in parameters) {
     	$('#' + i).val(parameters[i]);
     }
