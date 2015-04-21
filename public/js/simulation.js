@@ -46,6 +46,9 @@ function Organism(xposition, yposition, fitness, color) {
 
     // for network simulation
     this.neighbors = {};
+
+    // for group simulation
+    this.payoff = 0;
 }
 
 Organism.prototype.draw = function(context) {
@@ -73,6 +76,118 @@ function shuffle(o){
 };
 
 function runGroupSimulation(population) {
+	population = shuffle(population);
+
+    // XXX inefficient. also goes horribly wrong if num_organisms > n * m
+    var groups = [];
+    for (var i = 0; i < parameters.group.num_groups; i++) {
+    	groups[i] = [];
+    }
+
+    for (var i = 0; i < population.length; i++) {
+    	do {
+            var group = Math.floor(Math.random() * groups.length);
+        } while (groups[group].length === parameters.group.maximum_group);
+        groups[group].push(population[i]);
+    }
+
+    runGroupSimulationStep(groups);
+}
+
+function runGroupSimulationStep(groups) {
+    var canvas = document.getElementById("simulation");
+    var context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (var i = 0; i < groups.length; i++) {
+    	for (var j = 0; j < groups[i].length; j++) {
+    		groups[i][j].draw(context);
+    		context.fillStyle = 'white';
+    		context.fillText(i, groups[i][j].xposition - 3, groups[i][j].yposition + 3);
+        }
+    }
+
+    // calculate payoffs
+    for (var i = 0; i < groups.length; i++) {
+    	for (var j = 0; j < groups[i].length; j++) {
+            if (groups[i][j] instanceof Cooperator) {
+            	for (var k = 0; k < groups[i].length; k++) {
+            		if (k === j) {
+                        groups[i][k].payoff -= parameters.none.cost;
+                    }
+                    else {
+                    	groups[i][k].payoff += parameters.none.benefit;
+                    }
+                }
+            }
+        }
+    }
+
+    // roulette wheel again, and again O(n)
+    var w = 0.1;
+
+    var min_fitness = 0;
+    var total_fitness = 0;
+    for (var i = 0; i < groups.length; i++) {
+    	for (var j = 0; j < groups[i].length; j++) {
+    		min_fitness = Math.min(min_fitness, groups[i][j].fitness);
+    		total_fitness += groups[i][j].fitness;
+        }
+    }
+
+    // grossly shift things up if we have negative fitness
+    if (min_fitness < 0) {
+        for (var i = 0; i < groups.length; i++) {
+            for (var j = 0; j < groups[i].length; j++) {
+                groups[i][j].fitness -= min_fitness;
+                total_fitness -= min_fitness;
+            }
+        }
+    }
+
+
+    var p = .05;
+    var selection = Math.random() * total_fitness;
+    var done = false;
+    for (var i = 0; i < groups.length; i++) {
+        for (var j = 0; j < groups[i].length; j++) {
+            selection -= groups[i][j].fitness;
+            if (selection <= 0) {
+                var c = groups[i][j] instanceof Cooperator ? Cooperator : Defector;
+                var x = Math.random() * (canvas.width - 2 * radius) + radius;
+                var y = Math.random() * (canvas.height - 2 * radius) + radius;
+                groups[i].push(new c(x, y, parameters.none.starting_fitness));
+                if (groups[i].length > parameters.group.maximum_group) {
+                	if (Math.random() < p) {
+                        // split group i; pick another group to kill
+                        do {
+                            var kill = Math.floor(Math.random() * groups.length);
+                        } while (kill === i);
+
+                        groups[kill] = [];
+
+                        for (var k = 0; k < parameters.group.maximum_group / 2; k++) {
+                            var swap_groups = Math.floor(Math.random() * groups[i].length);
+                            groups[kill].push(groups[i][swap_groups]);
+                            groups[kill].splice(swap_groups, 1);
+                        }
+                    }
+                	else {
+                        // kill member of group
+                        var kill = Math.floor(Math.random() * groups[i].length);
+                        groups[i].splice(kill, 1);
+                    }
+                }
+                done = true;
+                break;
+            }
+        }
+        if (done === true) {
+        	break;
+        }
+    }
+
+    simulation_loop = setTimeout(function() { runGroupSimulationStep(groups); }, parameters.none.delay);
 }
 
 function runNetworkSimulation(population) {
@@ -138,7 +253,6 @@ function runNetworkSimulationStep(population) {
     } while (Object.keys(population[die].neighbors).length === 0)
 
     // roulette wheel again, and again O(n)
-    var total_fitness = 0;
     var w = 0.1;
 
     var min_fitness = 0;
@@ -164,7 +278,6 @@ function runNetworkSimulationStep(population) {
             var c = population[i] instanceof Cooperator ? Cooperator : Defector;
             var old_neighbors = population[die].neighbors;
             population[die] = new c(population[die].xposition, population[die].yposition, parameters.none.starting_fitness);
-            console.log(population[die]);
             population[die].neighbors = old_neighbors;
             break;
         }
