@@ -43,6 +43,9 @@ function Organism(xposition, yposition, fitness, color) {
     this.yposition = yposition;
     this.fitness = fitness;
     this.color = color;
+
+    // for network simulation
+    this.neighbors = {};
 }
 
 Organism.prototype.draw = function(context) {
@@ -69,12 +72,113 @@ function shuffle(o){
     return o;
 };
 
-function runSimulation(population) {
+function runGroupSimulation(population) {
+}
+
+function runNetworkSimulation(population) {
     population = shuffle(population);
 
+	var total_edges = parameters.network.num_neighbors * population.length / 2;
+	var i = 0;
+	while (i < total_edges) {
+	    var p1 = Math.floor(Math.random() * population.length);
+	    var p2 = Math.floor(Math.random() * population.length);
+
+        // can't have an edge to oneself or a double edge to another
+        // TODO: this can infinite loop if all edges are filled (or otherwise take a long time anyway)
+	    if (p1 == p2 || typeof population[p1].neighbors[p2] !== 'undefined') {
+	    	continue;
+        }
+
+        population[p1].neighbors[p2] = true;
+        population[p2].neighbors[p1] = true;
+        i++;
+    }
+
+    runNetworkSimulationStep(population);
+}
+
+function runNetworkSimulationStep(population) {
     var canvas = document.getElementById("simulation");
     var context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
+
+    context.strokeStyle = "black";
+    for (var i = 0; i < population.length; i++) {
+        // draw a line connecting it with all neighbors (this line will technically be drawn twice)
+        for (var j in population[i].neighbors) {
+            context.beginPath();
+            context.moveTo(population[i].xposition, population[i].yposition);
+            context.lineTo(population[j].xposition, population[j].yposition);
+            context.stroke();
+        }
+    }
+
+    var payoffs = {};
+    for (var i = 0; i < population.length; i++) {
+    	// now draw the nodes so that they are over all of the lines
+        population[i].draw(context);
+        payoffs[i] = 0;
+    }
+
+    // calculate payoffs
+    for (var i = 0; i < population.length; i++) {
+    	if (population[i] instanceof Cooperator) {
+    		payoffs[i] -= parameters.none.cost;
+            for (var j in population[i].neighbors) {
+            	payoffs[j] += parameters.none.benefit;
+            }
+        }
+    }
+
+    // neighbors compete over free vertex
+    // XXX handle annoying disconnected case in a gross way
+    do {
+        var die = Math.floor(Math.random() * population.length);
+    } while (Object.keys(population[die].neighbors).length === 0)
+
+    // roulette wheel again, and again O(n)
+    var total_fitness = 0;
+    var w = 0.1;
+
+    var min_fitness = 0;
+    var total_fitness = 0;
+    for (var i in population[die].neighbors) {
+    	population[i].fitness = 1 - w + w * payoffs[i];
+    	min_fitness = Math.min(min_fitness, population[i].fitness);
+    	total_fitness += population[i].fitness;
+    }
+
+    // grossly shift things up if we have negative fitness
+    if (min_fitness < 0) {
+        for (var i in population[die].neighbors) {
+        	population[i].fitness -= min_fitness;
+        	total_fitness -= min_fitness;
+        }
+    }
+
+    var selection = Math.random() * total_fitness;
+    for (var i in population[die].neighbors) {
+        selection -= population[i].fitness;
+        if (selection <= 0) {
+            var c = population[i] instanceof Cooperator ? Cooperator : Defector;
+            var old_neighbors = population[die].neighbors;
+            population[die] = new c(population[die].xposition, population[die].yposition, parameters.none.starting_fitness);
+            console.log(population[die]);
+            population[die].neighbors = old_neighbors;
+            break;
+        }
+    }
+
+    simulation_loop = setTimeout(function() { runNetworkSimulationStep(population); }, parameters.none.delay);
+}
+
+function runSimulation(population) {
+    var canvas = document.getElementById("simulation");
+    var context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    population = shuffle(population);
 
     if (rules.kin === true) {
         // double cooperators
@@ -239,6 +343,14 @@ $(function() {
 
         $('#run_simulation').text('Stop');
 
-        runSimulation(population);
+        if (rules.network === true) {
+            runNetworkSimulation(population);
+        }
+        else if (rules.group === true) {
+            runGroupSimulation(population);
+        }
+        else {
+            runSimulation(population);
+        }
     });
 });
