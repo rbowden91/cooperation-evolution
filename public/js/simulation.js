@@ -130,6 +130,7 @@ function runGroupSimulationStep(groups) {
     var total_fitness = 0;
     for (var i = 0; i < groups.length; i++) {
     	for (var j = 0; j < groups[i].length; j++) {
+    		groups[i][j].fitness = 1 - w + w * groups[i][j].payoff;
     		min_fitness = Math.min(min_fitness, groups[i][j].fitness);
     		total_fitness += groups[i][j].fitness;
         }
