@@ -76,25 +76,25 @@ function runSimulation(population) {
     var context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+    if (rules.kin === true) {
+        // double cooperators
+        var c_c_update = (parameters.none.benefit - parameters.none.cost) * (1 + parameters.kin.relatedness);
+
+        // cooperator against a defector
+        var c_d_update = parameters.none.benefit * parameters.kin.relatedness - parameters.none.cost;
+
+        // defector against a cooperator
+        var d_c_update = parameters.none.benefit - parameters.kin.relatedness * parameters.none.cost;
+    }
+    else {
+        var c_c_update = parameters.none.benefit - parameters.none.cost;
+        var c_d_update = -parameters.none.cost;
+        var d_c_update = parameters.none.benefit;
+    }
+
     for (var i = 0; i < population.length; i+=2) {
         population[i].draw(context);
         population[i+1].draw(context);
-
-        if (rules.kin === true) {
-        	// double cooperators
-        	var c_c_update = (parameters.none.benefit - parameters.none.cost) * (1 + parameters.kin.relatedness);
-
-        	// cooperator against a defector
-        	var c_d_update = parameters.none.benefit * parameters.kin.relatedness - parameters.none.cost;
-
-        	// defector against a cooperator
-        	var d_c_update = parameters.none.benefit - parameters.kin.relatedness * parameters.none.cost;
-        }
-        else {
-        	var c_c_update = parameters.none.benefit - parameters.none.cost;
-        	var c_d_update = -parameters.none.cost;
-        	var d_c_update = parameters.none.benefit;
-        }
 
         if (population[i] instanceof Cooperator && population[i+1] instanceof Defector) {
         	if (rules.indirect === false || Math.random() > parameters.indirect.reputation) {
@@ -111,7 +111,7 @@ function runSimulation(population) {
         else if (population[i] instanceof Cooperator && population[i+1] instanceof Cooperator) {
             do {
                 population[i + 1].fitness += c_c_update;
-                population[i].fitness -= c_c_update;
+                population[i].fitness += c_c_update;
             } while (rules.direct && Math.random() < parameters.direct.repeat_probability);
         }
     }
