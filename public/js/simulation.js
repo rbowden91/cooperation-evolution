@@ -1,14 +1,38 @@
 // default values for all possible parameters
 var parameters = {
-    'benefit' : 10,
-    'cost' : 10,
-    'interactions' : 0,
-    'num_organisms' : 50,
-    'cooperator_fraction' : .5,
-    'delay': 1000,
-    'repeat_probability' : .5,
-    'starting_fitness' : 100,
+    'none' : {
+    	'benefit' : 10,
+        'cost' : 10,
+        'num_organisms' : 50,
+        'cooperator_fraction' : .5,
+        'delay' : 1000,
+        'starting_fitness' : 100
+    },
+    'kin' : {
+        'relatedness' : .5,
+    },
+    'direct' : {
+        'repeat_probability' : .5,
+    },
+    'indirect' : {
+        'reputation' : .5,
+    },
+    'network' : {
+        'num_neighbors' : 5,
+    },
+    'group' : {
+        'maximum_group' : 10,
+        'num_groups' : 10
+    }
 };
+
+var rules = {
+    'kin' : false,
+    'direct' : true,
+    'indirect' : false,
+    'network' : false,
+    'group' : false
+}
 
 var radius = 10;
 
@@ -56,20 +80,39 @@ function runSimulation(population) {
         population[i].draw(context);
         population[i+1].draw(context);
 
+        if (rules.kin === true) {
+        	// double cooperators
+        	var c_c_update = (parameters.none.benefit - parameters.none.cost) * (1 + parameters.kin.relatedness);
+
+        	// cooperator against a defector
+        	var c_d_update = parameters.none.benefit * parameters.kin.relatedness - parameters.none.cost;
+
+        	// defector against a cooperator
+        	var d_c_update = parameters.none.benefit - parameters.kin.relatedness * parameters.none.cost;
+        }
+        else {
+        	var c_c_update = parameters.none.benefit - parameters.none.cost;
+        	var c_d_update = -parameters.none.cost;
+        	var d_c_update = parameters.none.benefit;
+        }
+
         if (population[i] instanceof Cooperator && population[i+1] instanceof Defector) {
-            population[i + 1].fitness += parameters['benefit'];
-            population[i].fitness -= parameters['cost'];
+        	if (rules.indirect === false || Math.random() > parameters.indirect.reputation) {
+                population[i + 1].fitness += d_c_update;
+                population[i].fitness += c_d_update;
+            }
         }
         else if (population[i] instanceof Defector && population[i+1] instanceof Cooperator) {
-            population[i].fitness += parameters['benefit'];
-            population[i + 1].fitness -= parameters['cost'];
+        	if (rules.indirect === false || Math.random() > parameters.indirect.reputation) {
+                population[i].fitness += d_c_update;
+                population[i + 1].fitness += c_d_update;
+            }
         }
         else if (population[i] instanceof Cooperator && population[i+1] instanceof Cooperator) {
             do {
-                population[i + 1].fitness += parameters['benefit'];
-                population[i].fitness -= parameters['cost'];
-            } while (Math.random() < parameters['repeat_probability']);
-            console.log(population[i+1].fitness);
+                population[i + 1].fitness += c_c_update;
+                population[i].fitness -= c_c_update;
+            } while (rules.direct && Math.random() < parameters.direct.repeat_probability);
         }
     }
 
@@ -91,26 +134,80 @@ function runSimulation(population) {
             selection -= population[j].fitness;
             if (selection <= 0) {
                 var c = population[j] instanceof Cooperator ? Cooperator : Defector;
-                new_population.push(new c(population[i].xposition, population[i].yposition, parameters['starting_fitness']));
+                new_population.push(new c(population[i].xposition, population[i].yposition, parameters.none.starting_fitness));
                 break;
             }
         }
     }
 
-    simulation_loop = setTimeout(function() { runSimulation(new_population); }, parameters.delay);
+    simulation_loop = setTimeout(function() { runSimulation(new_population); }, parameters.none.delay);
 }
 
 
 $(function() {
-        var pageHeight = $(window).height();
-        var pageWidth = $(window).width();
-        var divHeight = $('#top').height();
+    var pageHeight = $(window).height();
+    var pageWidth = $(window).width();
+    var divHeight = $('#top').height();
     $('#rest').html($('<canvas id="simulation" width="' + pageWidth + '" height="' + (pageHeight - divHeight - 10)  + '">'));
 
+    for (var rule in parameters) {
+        if (rule === 'none') {
+            for (var param in parameters[rule]) {
+            	$('#' + param).val(parameters[rule][param]);
+                $('#' + param).prop('disabled', false);
+            }
+            continue;
+        }
 
-    for (i in parameters) {
-        $('#' + i).val(parameters[i]);
+        if (rules[rule] === false) {
+            $('#' + rule).prop('checked', false);
+            for (var param in parameters[rule]) {
+            	$('#' + param).val('');
+                $('#' + param).prop('disabled', true);
+            }
+        }
+        else {
+            $('#' + rule).prop('checked', true);
+            for (var param in parameters[rule]) {
+            	$('#' + param).val(parameters[rule][param]);
+                $('#' + param).prop('disabled', false);
+            }
+        }
     }
+
+    $('input').on('change', function(e) {
+    	if ($(e.target).attr('type') === 'checkbox') {
+            if ($(e.target).is(':checked')) {
+                for (var param in parameters[e.target.id]) {
+                    $('#' + param).val(parameters[e.target.id][param]);
+                    $('#' + param).prop('disabled', false);
+                }
+                rules[e.target.id] = true;
+            }
+            else {
+                for (var param in parameters[e.target.id]) {
+                    $('#' + param).val('');
+                    $('#' + param).prop('disabled', true);
+                }
+                rules[e.target.id] = false;
+            }
+        }
+        else {
+            var rule = false;
+            for (var r in parameters) {
+                for (var param in parameters[r]) {
+                    if (param === e.target.id) {
+                        rule = r;
+                        break;
+                    }
+                }
+                if (rule !== false) {
+                    break;
+                }
+            }
+            parameters[rule][e.target.id] = parseFloat($(e.target).val());
+        }
+    });
 
     $('form').submit(function(){
         return false;
@@ -123,30 +220,20 @@ $(function() {
             clearTimeout(simulation_loop);
             simulation_loop = false;
 
-            for (i in parameters) {
-                $('#' + i).prop('disabled', false);
-            }
-
             $('#run_simulation').text('Run');
             return false;
         }
 
-        // TODO: error check numbers
-        for (i in parameters) {
-            parameters[i] = parseFloat($('#' + i).val());
-            $('#' + i).prop('disabled', true);
-        }
-
         var population = [];
 
-        var num_cooperators = Math.floor(parameters['num_organisms'] * parameters['cooperator_fraction']);
+        var num_cooperators = Math.floor(parameters.none.num_organisms * parameters.none.cooperator_fraction);
 
         var width = $('#simulation').width();
         var height = $('#simulation').height();
-        for (var i = 0; i < parameters['num_organisms']; i++) {
+        for (var i = 0; i < parameters.none.num_organisms; i++) {
             var x = Math.random() * (width - 2 * radius) + radius;
             var y = Math.random() * (height - 2 * radius) + radius;
-            var o = new (i < num_cooperators ? Cooperator : Defector)(x, y, parameters['starting_fitness']);
+            var o = new (i < num_cooperators ? Cooperator : Defector)(x, y, parameters.none.starting_fitness);
             population.push(o);
         }
 

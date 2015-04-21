@@ -3,20 +3,78 @@
   <head>
     <title>Cooperation Evolution Simulation</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap-theme.min.css">
   </head>
   <body>
-    <div id="top">
+    <div id="top" class="container-fluid">
       <form action="">
-        <label for="benefit">Benefit of cooperation to helped: </label><input id="benefit" autocomplete="off" />
-        <label for="cost">Cost of cooperation to helper: </label><input id="cost" autocomplete="off" />
-        <label for="interactions">Number of interactions per round: </label><input id="interactions" autocomplete="off" />
-        <label for="num_organisms">Number of organisms: </label><input id="num_organisms" autocomplete="off" />
-        <label for="cooperator_fraction">Fraction of cooperators: </label><input id="cooperator_fraction" autocomplete="off" />
-        <label for="delay">Delay between rounds (ms): </label><input id="delay" autocomplete="off" />
-        <label for="repeat_probability">Probability of another round between two players: </label><input id="repeat_probability" autocomplete="off" />
-        <label for="starting_fitness">Starting fitness: </label><input id="starting_fitness" autocomplete="off" />
-        <button id="run_simulation">Run</button>
+        <div class="row">
+          <div class="col-md-4">
+            <label for="benefit">Benefit to helped (b): </label><input id="benefit" autocomplete="off" />
+          </div>
+          <div class="col-md-2">
+            <input type="checkbox" name="rule" value="kin" id="kin"><label for="kin">Kin Selection</label>
+          </div>
+          <div class="col-md-6">
+            <label for="relatedness">Average relatedness (r): </label><input id="relatedness" autocomplete="off" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <label for="cost">Cost to helper (c): </label><input id="cost" autocomplete="off" />
+          </div>
+          <div class="col-md-2">
+            <input type="checkbox" name="rule" value="direct" id="direct"><label for="direct">Direct Reciprocity</label>
+          </div>
+          <div class="col-md-6">
+            <label for="repeat_probability">Probability of repeat (w): </label><input id="repeat_probability" autocomplete="off" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <label for="num_organisms">Number of organisms: </label><input id="num_organisms" autocomplete="off" />
+          </div>
+          <div class="col-md-2">
+            <input type="checkbox" name="rule" value="indirect" id="indirect"><label for="indirect">Indirect Reciprocity</label>
+          </div>
+          <div class="col-md-6">
+            <label for="reputation">Probability of knowing reputation (q): </label><input id="reputation" autocomplete="off" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <label for="cooperator_fraction">Fraction of cooperators: </label><input id="cooperator_fraction" autocomplete="off" />
+          </div>
+          <div class="col-md-2">
+            <input type="checkbox" name="rule" value="network" id="network"><label for="network">Network Reciprocity</label>
+          </div>
+          <div class="col-md-6">
+            <label for="num_neighbors">Average number of neighbors (k): </label><input id="num_neighbors" autocomplete="off" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <label for="delay">Delay between rounds (ms): </label><input id="delay" autocomplete="off" />
+          </div>
+          <div class="col-md-2">
+            <input type="checkbox" name="rule" value="group" id="group"><label for="group">Group Selection</label>
+          </div>
+          <div class="col-md-6" style="border-bottom-style:none">
+            <label for="maximum_group">Maximum group size (n): </label><input id="maximum_group" autocomplete="off" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <label for="starting_fitness">Starting fitness: </label><input id="starting_fitness" autocomplete="off" />
+          </div>
+          <div class="col-md-2">
+            <button id="run_simulation">Run</button>
+          </div>
+          <div class="col-md-6" style="border-top-style:none">
+            <label for="num_groups">Number of groups (m): </label><input id="num_groups" autocomplete="off" />
+          </div>
+        </div>
       </form>
     </div>
     <div id="rest">

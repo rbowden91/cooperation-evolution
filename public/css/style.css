@@ -1,2 +1,16 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html body #rest { height: 100%; }
+[class^=col-] {
+	border: 1px solid #cccccc;
+	background-color: #f0f0f0;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	height: 45px;
+}
+
+input:disabled {
+    background-color: #eeeeee;
+    padding
+}
+
+#run_simulation {
+    width: 100%;
+}
