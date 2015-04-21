@@ -124,7 +124,7 @@ function runGroupSimulationStep(groups) {
     }
 
     // roulette wheel again, and again O(n)
-    var w = 0.1;
+    var w = 0.005;
 
     var min_fitness = 0;
     var total_fitness = 0;
@@ -146,7 +146,7 @@ function runGroupSimulationStep(groups) {
     }
 
 
-    var p = .05;
+    var p = .005;
     var selection = Math.random() * total_fitness;
     var done = false;
     for (var i = 0; i < groups.length; i++) {
@@ -253,7 +253,7 @@ function runNetworkSimulationStep(population) {
     } while (Object.keys(population[die].neighbors).length === 0)
 
     // roulette wheel again, and again O(n)
-    var w = 0.1;
+    var w = 0.005;
 
     var min_fitness = 0;
     var total_fitness = 0;
